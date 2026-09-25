@@ -44,7 +44,7 @@ const FIX = [
     'summary' => 'Return zero when an invoice has no units',
     'edits' => [[
         'path' => 'app/InvoiceCalculator.php',
-        'search' => "        return \$this->total(\$lines) / \$quantity;",
+        'search' => '        return $this->total($lines) / $quantity;',
         'replace' => "        if (\$quantity === 0) {\n            return 0.0;\n        }\n\n        return \$this->total(\$lines) / \$quantity;",
     ]],
 ];
@@ -244,7 +244,7 @@ it('rejects a patch that does not fix the bug', function (): void {
 it('rejects a patch that fixes the bug but breaks the suite', function (): void {
     $overreach = ['summary' => 'Always return zero', 'edits' => [[
         'path' => 'app/InvoiceCalculator.php',
-        'search' => "        return \$this->total(\$lines) / \$quantity;",
+        'search' => '        return $this->total($lines) / $quantity;',
         'replace' => '        return 0.0;',
     ]]];
 

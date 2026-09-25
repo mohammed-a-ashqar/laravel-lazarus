@@ -89,7 +89,7 @@ it('gives up after the configured number of invalid answers', function (): void 
 it('redacts every message before it leaves the application', function (): void {
     $driver = new FakeDriver([DIAGNOSIS]);
     $conversation = (new Conversation('Connect with super-secret-db-password'))
-        ->user("Failing request: {\"password\": \"hunter22\"} from ada@example.com with Bearer abc.def.ghi");
+        ->user('Failing request: {"password": "hunter22"} from ada@example.com with Bearer abc.def.ghi');
 
     llmClient($driver)->ask($conversation, Diagnosis::class);
 

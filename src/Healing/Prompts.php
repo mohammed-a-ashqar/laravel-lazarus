@@ -12,6 +12,10 @@ use Alashqar\Lazarus\Healing\Data\ReproductionTest;
 use Alashqar\Lazarus\Models\Incident;
 use Alashqar\Lazarus\Sandbox\TestRun;
 use Alashqar\Lazarus\Sandbox\Worktree;
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 /**
  * Every prompt Lazarus sends. Kept in one place so they can be read and reviewed together.
@@ -181,10 +185,10 @@ final class Prompts
         }
 
         $found = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
 
         foreach ($iterator as $file) {
-            /** @var \SplFileInfo $file */
+            /** @var SplFileInfo $file */
             if (str_ends_with($file->getFilename(), 'Test.php')) {
                 $found[] = 'tests/'.ltrim(str_replace('\\', '/', substr($file->getPathname(), strlen($directory))), '/');
             }

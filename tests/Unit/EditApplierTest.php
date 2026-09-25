@@ -25,7 +25,7 @@ function fileReader(array $files): Closure
 
 it('replaces a block that matches exactly once', function (): void {
     $planned = (new EditApplier)->plan([
-        new FileEdit('app/InvoiceCalculator.php', "        return \$total / \$quantity;", "        return \$quantity === 0 ? 0.0 : \$total / \$quantity;"),
+        new FileEdit('app/InvoiceCalculator.php', '        return $total / $quantity;', '        return $quantity === 0 ? 0.0 : $total / $quantity;'),
     ], fileReader(['app/InvoiceCalculator.php' => CALCULATOR]));
 
     expect($planned['app/InvoiceCalculator.php'])
