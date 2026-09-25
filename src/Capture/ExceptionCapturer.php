@@ -16,6 +16,7 @@ use Illuminate\Contracts\Bus\Dispatcher as Bus;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
 use Throwable;
+use WeakMap;
 
 /**
  * Entry point from the exception handler: fingerprint, redact, store, maybe start a heal.
@@ -23,6 +24,9 @@ use Throwable;
 final class ExceptionCapturer
 {
     private bool $capturing = false;
+
+    /** @var WeakMap<Throwable, true> Exceptions already recorded, so a double report counts once. */
+    private WeakMap $seen;
 
     public function __construct(
         private readonly Settings $settings,
@@ -33,18 +37,21 @@ final class ExceptionCapturer
         private readonly Dispatcher $events,
         private readonly Bus $bus,
         private readonly string $environment,
-    ) {}
+    ) {
+        $this->seen = new WeakMap;
+    }
 
     /**
      * Called for every reported exception. Never throws: a broken monitor must not break the app.
      */
     public function report(Throwable $exception, ?Request $request = null): ?Incident
     {
-        if ($this->capturing || ! $this->shouldCapture($exception)) {
+        if ($this->capturing || isset($this->seen[$exception]) || ! $this->shouldCapture($exception)) {
             return null;
         }
 
         $this->capturing = true;
+        $this->seen[$exception] = true;
 
         try {
             return $this->record(ExceptionSnapshot::fromThrowable($exception), $request);

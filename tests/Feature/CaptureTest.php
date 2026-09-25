@@ -63,6 +63,15 @@ it('groups repeated occurrences of the same bug', function (): void {
         ->and(Incident::query()->sole()->occurrences)->toBe(3);
 });
 
+it('counts an exception object reported twice only once', function (): void {
+    $exception = new RuntimeException('Reported by two handlers');
+
+    app(ExceptionHandler::class)->report($exception);
+    app(ExceptionCapturer::class)->report($exception);
+
+    expect(Incident::query()->sole()->occurrences)->toBe(1);
+});
+
 it('skips ignored exception classes and other environments', function (): void {
     app(ExceptionHandler::class)->report(ValidationException::withMessages(['email' => 'Invalid.']));
 
