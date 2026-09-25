@@ -14,6 +14,7 @@ use Alashqar\Lazarus\Sandbox\TestHarness;
 use Alashqar\Lazarus\Support\Project;
 use Alashqar\Lazarus\Support\Settings;
 use Illuminate\Console\Command;
+use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolverInterface;
 use Throwable;
 
@@ -52,7 +53,7 @@ final class DoctorCommand extends Command
         $this->check('Test runner found ('.$framework->value.')', is_file($binary), implode(' ', $command));
 
         try {
-            $db->connection()->getSchemaBuilder()->hasTable('lazarus_incidents')
+            $this->hasIncidentsTable($db)
                 ? $this->check('lazarus_incidents table exists', true)
                 : $this->check('lazarus_incidents table exists', false, 'run php artisan migrate');
         } catch (Throwable $exception) {
@@ -106,5 +107,12 @@ final class DoctorCommand extends Command
         if (! $ok && $required) {
             $this->healthy = false;
         }
+    }
+
+    private function hasIncidentsTable(ConnectionResolverInterface $db): bool
+    {
+        $connection = $db->connection();
+
+        return $connection instanceof Connection && $connection->getSchemaBuilder()->hasTable('lazarus_incidents');
     }
 }

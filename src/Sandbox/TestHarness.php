@@ -102,7 +102,8 @@ final readonly class TestHarness
         $map = [];
 
         foreach (['autoload', 'autoload-dev'] as $section) {
-            $psr4 = is_array($composer) && is_array($composer[$section]['psr-4'] ?? null) ? $composer[$section]['psr-4'] : [];
+            $autoload = is_array($composer) && is_array($composer[$section] ?? null) ? $composer[$section] : [];
+            $psr4 = is_array($autoload['psr-4'] ?? null) ? $autoload['psr-4'] : [];
 
             foreach ($psr4 as $prefix => $directories) {
                 foreach ((array) $directories as $directory) {

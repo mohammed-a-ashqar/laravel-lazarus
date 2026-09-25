@@ -25,10 +25,11 @@ final class HealCommand extends Command
 
     public function handle(Healer $healer, Dispatcher $events, Bus $bus, LlmDriver $driver): int
     {
-        $incident = Incident::findByReference((string) $this->argument('incident'));
+        $reference = $this->reference();
+        $incident = Incident::findByReference($reference);
 
         if ($incident === null) {
-            $this->components->error('No incident matches "'.$this->argument('incident').'". Run lazarus:list to see them.');
+            $this->components->error('No incident matches "'.$reference.'". Run lazarus:list to see them.');
 
             return self::FAILURE;
         }
@@ -88,5 +89,12 @@ final class HealCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    private function reference(): string
+    {
+        $reference = $this->argument('incident');
+
+        return is_string($reference) ? $reference : '';
     }
 }

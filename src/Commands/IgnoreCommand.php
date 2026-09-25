@@ -16,10 +16,11 @@ final class IgnoreCommand extends Command
 
     public function handle(): int
     {
-        $incident = Incident::findByReference((string) $this->argument('incident'));
+        $reference = $this->reference();
+        $incident = Incident::findByReference($reference);
 
         if ($incident === null) {
-            $this->components->error('No incident matches "'.$this->argument('incident').'".');
+            $this->components->error('No incident matches "'.$reference.'".');
 
             return self::FAILURE;
         }
@@ -28,5 +29,12 @@ final class IgnoreCommand extends Command
         $this->components->info("Incident #{$incident->id} ({$incident->shortClass()}) will not be healed.");
 
         return self::SUCCESS;
+    }
+
+    private function reference(): string
+    {
+        $reference = $this->argument('incident');
+
+        return is_string($reference) ? $reference : '';
     }
 }
