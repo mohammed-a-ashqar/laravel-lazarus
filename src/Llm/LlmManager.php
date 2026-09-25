@@ -8,6 +8,7 @@ use Alashqar\Lazarus\Llm\Contracts\LlmDriver;
 use Alashqar\Lazarus\Llm\Drivers\AnthropicDriver;
 use Alashqar\Lazarus\Llm\Drivers\DriverConfig;
 use Alashqar\Lazarus\Llm\Drivers\FakeDriver;
+use Alashqar\Lazarus\Llm\Drivers\OllamaDriver;
 use Alashqar\Lazarus\Llm\Drivers\OpenAiDriver;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Manager;
@@ -34,6 +35,11 @@ final class LlmManager extends Manager
     protected function createOpenaiDriver(): LlmDriver
     {
         return new OpenAiDriver($this->http(), $this->driverConfig('openai'));
+    }
+
+    protected function createOllamaDriver(): LlmDriver
+    {
+        return new OllamaDriver($this->http(), $this->driverConfig('ollama'));
     }
 
     protected function createFakeDriver(): LlmDriver
