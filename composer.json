@@ -3,7 +3,7 @@
     "description": "Self-healing Laravel apps: turns a production exception into a proven, reviewed pull request with a failing test, a minimal patch and red-to-green evidence.",
     "keywords": ["laravel", "self-healing", "exceptions", "llm", "ai", "debugging", "pull-request", "testing", "pest"],
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
             "name": "Mohammed Alashqar",
