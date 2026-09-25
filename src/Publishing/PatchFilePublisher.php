@@ -7,6 +7,7 @@ namespace Alashqar\Lazarus\Publishing;
 use Alashqar\Lazarus\Healing\Data\HealingReport;
 use Alashqar\Lazarus\Sandbox\SandboxException;
 use Alashqar\Lazarus\Sandbox\Worktree;
+use Alashqar\Lazarus\Support\Path;
 use Carbon\CarbonImmutable;
 
 /**
@@ -27,8 +28,9 @@ final readonly class PatchFilePublisher implements Publisher
         }
 
         $name = sprintf('%s-%s', CarbonImmutable::now()->format('Ymd-His'), $report->incident->shortFingerprint());
-        $patch = $this->directory.'/'.$name.'.patch';
-        $markdown = $this->directory.'/'.$name.'.md';
+        $directory = Path::normalize($this->directory);
+        $patch = $directory.'/'.$name.'.patch';
+        $markdown = $directory.'/'.$name.'.md';
 
         file_put_contents($patch, $worktree->formatPatch()."\n");
         file_put_contents($markdown, $this->renderer->render($report));

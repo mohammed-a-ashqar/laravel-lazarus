@@ -44,7 +44,7 @@ final class DoctorCommand extends Command
 
         $isRepository = $git->passed() && $workspace->isRepository();
         $this->check('Project is a git repository', $isRepository);
-        $this->check('Working tree is clean', ! $isRepository || $workspace->isClean() || ! $settings->bool('sandbox.require_clean_tree', true), 'commit or stash before healing', required: false);
+        $this->check('Working tree is clean', ! $isRepository || $workspace->isClean() || ! $settings->bool('sandbox.require_clean_tree', true), $isRepository && ! $workspace->isClean() ? 'commit or stash before healing' : '', required: false);
         $this->check('Can create git worktrees', $isRepository && $workspace->canCreateWorktrees());
 
         $framework = TestFramework::detect($project->root);

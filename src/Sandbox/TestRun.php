@@ -28,6 +28,22 @@ final readonly class TestRun
     }
 
     /**
+     * The lines around the first mention of $needle, or the tail when it is not mentioned.
+     */
+    public function around(string $needle, int $before = 1, int $after = 8): string
+    {
+        $lines = preg_split('/\R/', rtrim($this->output)) ?: [];
+
+        foreach ($lines as $index => $line) {
+            if ($needle !== '' && str_contains($line, $needle)) {
+                return implode("\n", array_slice($lines, max(0, $index - $before), $before + $after + 1));
+            }
+        }
+
+        return $this->excerpt($before + $after + 1);
+    }
+
+    /**
      * The last lines of output, where test runners put the failure summary.
      */
     public function excerpt(int $lines = 40): string

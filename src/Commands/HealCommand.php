@@ -65,7 +65,7 @@ final class HealCommand extends Command
 
             if ($event->details !== null && trim($event->details) !== '') {
                 foreach (explode("\n", $event->details) as $line) {
-                    $this->line('    <fg=gray>│ '.$line.'</>');
+                    $this->line('    <fg=gray>│ '.mb_strimwidth($line, 0, 140, '…').'</>');
                 }
             }
         });

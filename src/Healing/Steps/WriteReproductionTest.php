@@ -76,7 +76,7 @@ final readonly class WriteReproductionTest implements Step
 
                 return new StepResult(
                     sprintf('Reproduced in %s (red after %.1fs, attempt %d)', $path, $run->seconds, $attempt),
-                    $run->excerpt(12),
+                    $run->around($state->incident->shortClass(), 0, 2),
                 );
             }
 
