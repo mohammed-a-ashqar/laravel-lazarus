@@ -12,6 +12,12 @@ foreach (['APP_BASE_PATH' => $lazarusRoot, 'COMPOSER_VENDOR_DIR' => $lazarusVend
     putenv($lazarusName.'='.$lazarusValue);
 }
 
+// Pest sets this itself a moment later, but Collision wires its printer while the
+// autoloader loads, and that now happens here first.
+if (str_ends_with(str_replace('\\', '/', (string) ($_SERVER['argv'][0] ?? '')), 'bin/pest')) {
+    $_SERVER['COLLISION_PRINTER'] = 'DefaultPrinter';
+}
+
 if (is_file($lazarusVendor.'/autoload.php')) {
     require_once $lazarusVendor.'/autoload.php';
 }

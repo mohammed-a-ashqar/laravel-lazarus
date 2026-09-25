@@ -81,7 +81,6 @@ final readonly class GitWorkspace
 
         $branch = $this->branchFor($fingerprint);
         $base = $this->head();
-        $path = Path::normalize($this->worktreesPath).'/'.substr($fingerprint, 0, 10).'-'.bin2hex(random_bytes(3));
 
         // A branch left behind by a crashed run would make `worktree add -b` fail.
         if ($this->branchExists($branch)) {
@@ -92,6 +91,9 @@ final readonly class GitWorkspace
         if (! is_dir($this->worktreesPath)) {
             mkdir($this->worktreesPath, 0o775, true);
         }
+
+        $parent = Path::normalize(realpath($this->worktreesPath) ?: $this->worktreesPath);
+        $path = $parent.'/'.substr($fingerprint, 0, 10).'-'.bin2hex(random_bytes(3));
 
         $this->git->run($this->project->root, ['worktree', 'add', '-b', $branch, $path, $base]);
 

@@ -69,7 +69,8 @@ final readonly class TestHarness
         $overlay = $this->writeOverlay($worktree);
 
         if (($command[0] ?? null) === $this->php()) {
-            array_splice($command, 1, 0, ['-d', 'auto_prepend_file='.$overlay]);
+            // Quoted, because the ini parser chokes on characters such as ~ in Windows short paths.
+            array_splice($command, 1, 0, ['-d', 'auto_prepend_file="'.$overlay.'"']);
         }
 
         return $this->runner->run($command, $worktree->path, $timeout, [

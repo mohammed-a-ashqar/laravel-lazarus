@@ -15,7 +15,9 @@ final readonly class Project
 
     public function __construct(string $root, ?string $vendorPath = null)
     {
-        $this->root = Path::normalize(rtrim($root, '\\/'));
+        // Resolve symlinks and short names: stack traces always carry the real path, and a
+        // zero-downtime deploy ("current" -> releases/42) would otherwise match nothing.
+        $this->root = Path::normalize(rtrim(realpath($root) ?: $root, '\\/'));
         $this->vendorPath = Path::normalize(rtrim($vendorPath ?? $this->root.'/vendor', '\\/'));
     }
 
