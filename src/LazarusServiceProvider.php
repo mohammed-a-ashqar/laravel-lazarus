@@ -211,13 +211,14 @@ final class LazarusServiceProvider extends ServiceProvider
 
     private function currentRequest(): ?Request
     {
-        if ($this->app->runningInConsole() || ! $this->app->bound('request')) {
+        if (! $this->app->bound('request')) {
             return null;
         }
 
+        // Console commands and queue workers get a synthetic request without a route.
         $request = $this->app->make('request');
 
-        return $request instanceof Request ? $request : null;
+        return $request instanceof Request && $request->route() !== null ? $request : null;
     }
 
     /**

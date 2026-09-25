@@ -46,8 +46,8 @@ class Incident extends Model
      */
     public static function findByReference(string $reference): ?self
     {
-        if (ctype_digit($reference)) {
-            return self::query()->find((int) $reference);
+        if (ctype_digit($reference) && ($incident = self::query()->find((int) $reference)) instanceof self) {
+            return $incident;
         }
 
         /** @var Builder<self> $query */
