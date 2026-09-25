@@ -53,7 +53,16 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite
           coverage: none
+
+      # The end-to-end suite builds throwaway git repositories and commits the
+      # verified fix inside a real worktree, so git needs an identity here.
+      - name: Configure git
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.com"
+          git config --global init.defaultBranch main
 
       # Laravel 11 is past its security-support window, so Composer refuses to
       # install it by default. The package still supports it; this job only
