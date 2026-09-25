@@ -1,0 +1,64 @@
+{
+    "name": "mohammedname2002/laravel-lazarus",
+    "description": "Self-healing Laravel apps: turns a production exception into a proven, reviewed pull request with a failing test, a minimal patch and red-to-green evidence.",
+    "keywords": ["laravel", "self-healing", "exceptions", "llm", "ai", "debugging", "pull-request", "testing", "pest"],
+    "type": "library",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Mohammed Alashqar",
+            "email": "mohammedname2002@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/cache": "^11.0|^12.0",
+        "illuminate/console": "^11.0|^12.0",
+        "illuminate/contracts": "^11.0|^12.0",
+        "illuminate/database": "^11.0|^12.0",
+        "illuminate/events": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "illuminate/queue": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0",
+        "symfony/process": "^7.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Alashqar\\Lazarus\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Alashqar\\Lazarus\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint",
+        "lint:check": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=512M"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Alashqar\\Lazarus\\LazarusServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
