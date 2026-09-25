@@ -31,12 +31,12 @@ final readonly class PathGuard
     private array $writable;
 
     /**
-     * @param  list<string>  $writable  Allowed path prefixes such as "app/".
+     * @param  list<string>  $writable  Allowed path prefixes such as "app/"; "*" allows the whole project.
      */
     public function __construct(array $writable)
     {
         $this->writable = array_values(array_map(
-            static fn (string $prefix): string => rtrim(strtolower(str_replace('\\', '/', $prefix)), '/').'/',
+            static fn (string $prefix): string => $prefix === '*' ? '' : rtrim(strtolower(str_replace('\\', '/', $prefix)), '/').'/',
             $writable,
         ));
     }
@@ -100,7 +100,7 @@ final readonly class PathGuard
         }
 
         foreach ($this->writable as $prefix) {
-            if (str_starts_with($lower, $prefix)) {
+            if ($prefix === '' || str_starts_with($lower, $prefix)) {
                 return null;
             }
         }
