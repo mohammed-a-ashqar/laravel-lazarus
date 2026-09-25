@@ -6,16 +6,19 @@ use Alashqar\Lazarus\Capture\ExceptionCapturer;
 use Alashqar\Lazarus\Enums\IncidentStatus;
 use Alashqar\Lazarus\Events\FixVerified;
 use Alashqar\Lazarus\Events\HealingFailed;
+use Alashqar\Lazarus\Events\PullRequestOpened;
 use Alashqar\Lazarus\Events\ReproductionConfirmed;
 use Alashqar\Lazarus\Events\ReproductionFailed;
 use Alashqar\Lazarus\Healing\Healer;
 use Alashqar\Lazarus\Llm\Contracts\LlmDriver;
 use Alashqar\Lazarus\Llm\Drivers\FakeDriver;
-use Alashqar\Lazarus\Models\Incident;
 use Alashqar\Lazarus\Redaction\Redactor;
 use Alashqar\Lazarus\Support\Project;
 use Alashqar\Lazarus\Tests\Support\FixtureRepository;
+use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
+use Symfony\Component\Process\Process;
 
 /*
  * These tests run the real pipeline against a real git repository: a real worktree, the
@@ -138,6 +141,59 @@ it('heals a real bug: red, patch, green, full suite, patch file, clean up', func
     Event::assertDispatched(ReproductionConfirmed::class, fn (ReproductionConfirmed $event): bool => $event->attempt === 1);
     Event::assertDispatched(FixVerified::class);
     Event::assertNotDispatched(HealingFailed::class);
+});
+
+it('pushes the branch and opens a draft pull request with the evidence', function (): void {
+    Event::fake([PullRequestOpened::class]);
+    Http::fake([
+        'api.github.com/repos/acme/invoice-app/pulls' => Http::response(['number' => 7, 'html_url' => 'https://github.com/acme/invoice-app/pull/7'], 201),
+        'api.github.com/repos/acme/invoice-app/issues/7/labels' => Http::response([], 200),
+    ]);
+
+    $remote = $this->repo->scratch.'/remote.git';
+    (new Process(['git', 'init', '-q', '--bare', $remote]))->mustRun();
+
+    config()->set('lazarus.publisher', 'github');
+    config()->set('lazarus.publishers.github', [
+        'token' => 'ghp_TestTokenThatMustNotAppearAnywhere000000',
+        'repository' => 'acme/invoice-app',
+        'base' => 'main',
+        'remote_url' => $remote,
+        'api_url' => 'https://api.github.com',
+        'draft' => true,
+        'labels' => ['lazarus'],
+    ]);
+    $this->llm->push(REPRODUCTION, FIX, VERDICT);
+
+    $report = app(Healer::class)->heal($this->incident);
+    $incident = $this->incident->fresh();
+
+    expect($report)->not->toBeNull((string) $incident?->failure_reason)
+        ->and($incident->status)->toBe(IncidentStatus::PrOpened)
+        ->and($incident->pr_url)->toBe('https://github.com/acme/invoice-app/pull/7');
+
+    // The branch really reached the remote, and only there.
+    $pushed = (new Process(['git', 'branch', '--list', 'lazarus/*'], $remote))->mustRun()->getOutput();
+    expect(trim($pushed))->toBe($report->branch)
+        ->and($this->repo->branches())->toBe(['main']);
+
+    Http::assertSent(function (HttpRequest $request) use ($report): bool {
+        if (! str_ends_with($request->url(), '/pulls')) {
+            return false;
+        }
+
+        return $request['head'] === $report->branch
+            && $request['base'] === 'main'
+            && $request['draft'] === true
+            && $request['title'] === 'fix: return zero when an invoice has no units'
+            && str_contains($request['body'], 'averageUnitPrice() divides by the summed quantity')
+            && str_contains($request['body'], 'tests/Lazarus/ZeroQuantityInvoiceTest.php')
+            && str_contains($request['body'], '+        if ($quantity === 0) {')
+            && str_contains($request['body'], 'DivisionByZeroError')
+            && ! str_contains($request['body'], 'ghp_TestToken');
+    });
+
+    Event::assertDispatched(PullRequestOpened::class, fn (PullRequestOpened $event): bool => $event->url === $incident->pr_url);
 });
 
 it('rejects tests that do not reproduce the bug and publishes nothing', function (): void {
