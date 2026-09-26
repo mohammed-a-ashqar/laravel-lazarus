@@ -41,6 +41,125 @@ $ php artisan lazarus:heal 1
   Cost ............................................................... 8,149 tokens · $0.0240
 ```
 
+## Quick start (5 minutes)
+
+You need a Laravel 11 or 12 app that is a git repository and has at least one passing test.
+
+### 1. Install
+
+```bash
+composer require mohammed-a-ashqar/laravel-lazarus
+php artisan vendor:publish --tag=lazarus-config
+php artisan migrate
+```
+
+### 2. Connect an AI model
+
+Lazarus needs a language model to write the test and the fix. Pick **one** option and paste its
+lines at the end of your `.env` file.
+
+| Option | Cost | Best for |
+| --- | --- | --- |
+| **A. Groq** | Free tier | Trying Lazarus today |
+| **B. Ollama** | Free, runs on your computer | Keeping your code private |
+| **C. Anthropic or OpenAI** | Paid, per use | Real projects |
+
+**A. Groq (free).** Create a key at [console.groq.com/keys](https://console.groq.com/keys), then:
+
+```dotenv
+LAZARUS_LLM=openai
+OPENAI_API_KEY=gsk_your_key_here
+OPENAI_BASE_URL=https://api.groq.com/openai
+LAZARUS_OPENAI_MODEL=openai/gpt-oss-120b
+```
+
+**B. Ollama (free, private).** Install [Ollama](https://ollama.com/download) and download a model
+of at least 7B (about 4.7 GB; 3B models are too small to work):
+
+```bash
+ollama pull qwen2.5-coder:7b
+```
+
+```dotenv
+LAZARUS_LLM=ollama
+LAZARUS_OLLAMA_MODEL=qwen2.5-coder:7b
+```
+
+**C. Anthropic or OpenAI (paid).** Create a key at
+[console.anthropic.com](https://console.anthropic.com/) or
+[platform.openai.com/api-keys](https://platform.openai.com/api-keys), then use one of:
+
+```dotenv
+LAZARUS_LLM=anthropic
+ANTHROPIC_API_KEY=sk-ant-your_key_here
+```
+
+```dotenv
+LAZARUS_LLM=openai
+OPENAI_API_KEY=sk-your_key_here
+```
+
+Never commit your `.env` file: it holds your key.
+
+### 3. Check the setup
+
+```bash
+php artisan lazarus:doctor
+```
+
+Every line should say `OK`. A `WARN` on `Auto-heal` is normal. If something fails, see
+[Common problems](#common-problems).
+
+### 4. Break something on purpose
+
+Add a route with a bug to `routes/web.php`:
+
+```php
+Route::get('/average', function () {
+    $prices = [];
+
+    return ['average' => array_sum($prices) / count($prices)]; // Division by zero
+});
+```
+
+Commit it (Lazarus only works on committed code), then open the page once so the error is
+captured:
+
+```bash
+git add -A && git commit -m "Add average page"
+php artisan serve
+```
+
+Visit `http://127.0.0.1:8000/average`. You will see a `DivisionByZeroError`.
+
+### 5. Heal it
+
+```bash
+php artisan lazarus:list      # shows the error as incident #1
+php artisan lazarus:heal 1    # writes a test, fixes the bug and proves the fix
+```
+
+The fix is saved in `storage/lazarus/` as a `.patch` file, next to a `.md` report that explains
+the bug. Read it, and if you agree, apply it:
+
+```bash
+git am storage/lazarus/<file>.patch
+```
+
+Your code is never changed until you apply the patch yourself. To get a pull request on GitHub
+instead of a file, see [Configuration](#configuration).
+
+### Common problems
+
+| Message | What to do |
+| --- | --- |
+| `model ... does not exist` or `HTTP 404` | The model name is wrong. For Groq, check the list at [console.groq.com/docs/models](https://console.groq.com/docs/models). For Ollama, run `ollama list`. |
+| `HTTP 401` | The API key is wrong or expired. Create a new one. |
+| `The working tree has uncommitted changes` | Run `git add -A && git commit -m "wip"` first. |
+| `Could not reproduce the bug in 3 attempts` | The model could not write a test for this bug. With Ollama, use a bigger model (7B or more). Some bugs, like those that depend on live data or an external API, cannot be reproduced by a test. |
+| `lazarus:list` is empty | The error was not captured. Make sure `APP_ENV` is `local`, `staging` or `production`. |
+| Your own tests fail | Lazarus needs your test suite to pass before it can prove a fix. Run `php artisan test` and fix it first. |
+
 ## The problem
 
 An exception tracker tells you *that* something broke. Then a developer still has to read the
