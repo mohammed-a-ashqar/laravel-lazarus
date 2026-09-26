@@ -1,7 +1,7 @@
 {
     "name": "mohammed-a-ashqar/laravel-lazarus",
     "description": "Self-healing Laravel apps: turns a production exception into a proven, reviewed pull request with a failing test, a minimal patch and red-to-green evidence.",
-    "keywords": ["laravel", "self-healing", "exceptions", "llm", "ai", "debugging", "pull-request", "testing", "pest"],
+    "keywords": ["laravel", "self-healing", "exceptions", "error-monitoring", "llm", "ai", "pull-request", "automated-fixes", "ollama"],
     "type": "library",
     "license": "MIT",
     "authors": [
