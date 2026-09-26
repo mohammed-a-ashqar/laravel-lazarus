@@ -3,6 +3,7 @@
 # Lazarus
 
 [![CI](https://github.com/mohammed-a-ashqar/laravel-lazarus/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammed-a-ashqar/laravel-lazarus/actions/workflows/ci.yml)
+[![Packagist](https://img.shields.io/packagist/v/mohammed-a-ashqar/laravel-lazarus)](https://packagist.org/packages/mohammed-a-ashqar/laravel-lazarus)
 ![PHP](https://img.shields.io/badge/PHP-8.2%20%7C%208.3%20%7C%208.4-777BB4)
 ![Laravel](https://img.shields.io/badge/Laravel-11%20%7C%2012-FF2D20)
 ![PHPStan](https://img.shields.io/badge/PHPStan-level%20max-2A5EA7)
@@ -112,17 +113,8 @@ in [`examples/demo-app.md`](examples/demo-app.md).
 
 ## Installation
 
-The package is not on Packagist yet. Until it is, add the repository to your app's
-`composer.json` first:
-
-```json
-"repositories": [
-    { "type": "vcs", "url": "https://github.com/mohammed-a-ashqar/laravel-lazarus" }
-]
-```
-
 ```bash
-composer require mohammed-a-ashqar/laravel-lazarus:dev-main
+composer require mohammed-a-ashqar/laravel-lazarus
 php artisan vendor:publish --tag=lazarus-config
 php artisan migrate
 php artisan lazarus:doctor
