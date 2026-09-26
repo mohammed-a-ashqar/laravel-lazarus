@@ -10,29 +10,32 @@ that reproduces the bug, proves it fails, finds a minimal patch, proves the test
 the rest of your suite still does, then opens a pull request with the whole case. A human merges
 it or doesn't. If any step can't be proven, nothing is published and you are told why.
 
-Example output (illustrative):
+A real run on the [demo app](examples/demo-app.md), healed by `openai/gpt-oss-120b` through Groq's
+OpenAI-compatible API:
 
 ```text
-$ php artisan lazarus:heal 3
+$ php artisan lazarus:heal 1
 
-  Lazarus is healing incident #3 with anthropic:claude-sonnet-5
+  Lazarus is healing incident #1 with openai:openai/gpt-oss-120b
   DivisionByZeroError: Division by zero
-  app/Services/InvoiceCalculator.php:26 · seen 14 time(s)
+  app/Services/InvoiceCalculator.php:22 · seen 2 time(s)
 
   ● Preparing an isolated worktree...
-  ✔ Worktree /tmp/lazarus-worktrees/5c1e0f9a2b-3fa91c on branch lazarus/fix-5c1e0f9a2b 0.4s
+  ✔ Worktree .../lazarus-worktrees/495c3d2fa6-f56dfb on branch lazarus/fix-495c3d2fa6 1.1s
   ● Writing a test that reproduces the bug...
-  ✔ Reproduced in tests/Feature/Lazarus/FreeSampleInvoiceTest.php (red after 1.9s, attempt 1) 9.8s
-    │ FAILED  Tests\Feature\Lazarus\FreeSampleInvoiceTest > it prices a free sample
-    │ DivisionByZeroError: Division by zero
+  ✔ Reproduced in tests/Feature/Lazarus/InvoiceAverageZeroQuantityTest.php (red after 6.8s, attempt 1) 12.3s
+    │ DivisionByZeroError: Division by zero in .../app/Services/InvoiceCalculator.php:22
   ● Proposing a minimal patch...
-  ✔ Return zero when an invoice has no units (1 edit in app/Services/InvoiceCalculator.php) 6.2s
+  ✔ Guard against division by zero in averageUnitPrice (1 edit in app/Services/InvoiceCalculator.php) 2.6s
   ● Verifying the patch...
-  ✔ Reproduction test is green (1.7s) and the full suite passes (8.3s) 10.1s
+  ✔ Reproduction test is green (0.4s) and the full suite passes (0.4s) 1.3s
+    │ OK (4 tests, 6 assertions)
   ● Writing the diagnosis...
-  ✔ averageUnitPrice() divides by the summed quantity, which is zero for free samples (confidence 92%) 3.9s
+  ✔ Division by zero when calculating average unit price with zero total quantity (confidence 93%) 4.5s
   ● Publishing the fix for review...
-  ✔ Pull request opened: https://github.com/acme/shop/pull/128 1.6s
+  ✔ Patch written to storage/lazarus/20260926-112052-495c3d2fa6.patch (apply with `git am ...`) 0.2s
+
+  Cost ............................................................... 8,149 tokens · $0.0240
 ```
 
 ## The problem
@@ -241,7 +244,9 @@ LAZARUS_OLLAMA_MODEL=qwen2.5-coder
 ```
 
 Smaller local models fail more proofs than hosted ones; when they do, Lazarus simply publishes
-nothing. Every response, from any driver, must be strict JSON validated into a readonly DTO; an
+nothing. In testing, `qwen2.5-coder:3b` could not write a valid reproduction for the demo bug, so
+use a 7B model or larger. The `openai` driver also works with any OpenAI-compatible API through
+`OPENAI_BASE_URL` (for example `https://api.groq.com/openai`, which healed the demo above). Every response, from any driver, must be strict JSON validated into a readonly DTO; an
 invalid answer is sent back with the exact validation error. Add your own driver with
 `app(LlmManager::class)->extend('name', fn () => new MyDriver)`.
 
