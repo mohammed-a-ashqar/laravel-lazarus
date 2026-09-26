@@ -1,3 +1,5 @@
+<p align="center"><img src="art/banner.png" alt="Lazarus: self-healing Laravel apps" width="100%"></p>
+
 # Lazarus
 
 [![CI](https://github.com/mohammedname2002/laravel-lazarus/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammedname2002/laravel-lazarus/actions/workflows/ci.yml)
