@@ -10,7 +10,7 @@ Only the latest release receives security fixes.
 ## Reporting a vulnerability
 
 Please **do not open a public issue**. Report it privately through
-[GitHub Security Advisories](https://github.com/mohammedname2002/laravel-lazarus/security/advisories/new)
+[GitHub Security Advisories](https://github.com/mohammed-a-ashqar/laravel-lazarus/security/advisories/new)
 or by email to mohammedname2002@gmail.com.
 
 Include the version, your configuration (without secrets) and the steps to reproduce. You will get

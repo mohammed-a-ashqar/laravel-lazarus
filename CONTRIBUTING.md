@@ -5,7 +5,7 @@ Thanks for helping. Bug reports, fixes and new LLM drivers are all welcome.
 ## Setup
 
 ```bash
-git clone https://github.com/mohammedname2002/laravel-lazarus.git
+git clone https://github.com/mohammed-a-ashqar/laravel-lazarus.git
 cd laravel-lazarus
 composer install
 ```

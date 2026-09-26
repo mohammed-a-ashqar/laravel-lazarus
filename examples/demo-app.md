@@ -24,14 +24,14 @@ git push -u origin main
 From Packagist:
 
 ```bash
-composer require mohammedname2002/laravel-lazarus
+composer require mohammed-a-ashqar/laravel-lazarus
 ```
 
 Or from a local checkout next to the app, while developing:
 
 ```bash
 composer config repositories.lazarus '{"type": "path", "url": "../laravel-lazarus"}'
-composer require "mohammedname2002/laravel-lazarus:@dev"
+composer require "mohammed-a-ashqar/laravel-lazarus:@dev"
 ```
 
 Then:
