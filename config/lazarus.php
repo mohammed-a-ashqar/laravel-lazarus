@@ -216,4 +216,30 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Free ways to hear about errors and fixes. Fill in any of them; leave the
+    | rest empty. Email uses your app's own mailer. For Telegram, create a bot
+    | with @BotFather and send it a message to get your chat id. The webhook
+    | works with Slack and Discord incoming webhooks.
+    |
+    */
+
+    'notifications' => [
+        'mail' => env('LAZARUS_NOTIFY_MAIL'), // comma-separated addresses
+
+        'telegram' => [
+            'token' => env('LAZARUS_NOTIFY_TELEGRAM_TOKEN'),
+            'chat_id' => env('LAZARUS_NOTIFY_TELEGRAM_CHAT'),
+        ],
+
+        'webhook' => env('LAZARUS_NOTIFY_WEBHOOK'),
+
+        // What to send: a new error seen live, a fix ready for review, a heal that failed.
+        'events' => ['captured', 'fixed', 'failed'],
+    ],
+
 ];

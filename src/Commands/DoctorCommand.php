@@ -7,6 +7,7 @@ namespace Alashqar\Lazarus\Commands;
 use Alashqar\Lazarus\Enums\TestFramework;
 use Alashqar\Lazarus\Llm\Contracts\LlmDriver;
 use Alashqar\Lazarus\Llm\TokenBudget;
+use Alashqar\Lazarus\Notifications\Notifier;
 use Alashqar\Lazarus\Publishing\GitHubPublisher;
 use Alashqar\Lazarus\Sandbox\GitWorkspace;
 use Alashqar\Lazarus\Sandbox\ProcessRunner;
@@ -84,6 +85,9 @@ final class DoctorCommand extends Command
         );
 
         $this->check('Auto-heal', $settings->bool('auto_heal'), $settings->bool('auto_heal') ? 'queued on capture' : 'off: run lazarus:heal manually', required: false);
+
+        $channels = $this->laravel->make(Notifier::class)->channels();
+        $this->check('Notifications', $channels !== [], $channels !== [] ? implode(', ', $channels).' (test with lazarus:notify-test)' : 'off: set LAZARUS_NOTIFY_MAIL, _TELEGRAM_* or _WEBHOOK', required: false);
 
         $this->newLine();
 

@@ -10,7 +10,12 @@ use Alashqar\Lazarus\Commands\DoctorCommand;
 use Alashqar\Lazarus\Commands\HealCommand;
 use Alashqar\Lazarus\Commands\IgnoreCommand;
 use Alashqar\Lazarus\Commands\ListCommand;
+use Alashqar\Lazarus\Commands\NotifyTestCommand;
+use Alashqar\Lazarus\Commands\ScanCommand;
 use Alashqar\Lazarus\Context\QueryRecorder;
+use Alashqar\Lazarus\Events\FixPublished;
+use Alashqar\Lazarus\Events\HealingFailed;
+use Alashqar\Lazarus\Events\IncidentCaptured;
 use Alashqar\Lazarus\Healing\Healer;
 use Alashqar\Lazarus\Healing\Steps\ProposePatch;
 use Alashqar\Lazarus\Healing\Steps\WriteReproductionTest;
@@ -18,6 +23,7 @@ use Alashqar\Lazarus\Llm\Contracts\LlmDriver;
 use Alashqar\Lazarus\Llm\LlmClient;
 use Alashqar\Lazarus\Llm\LlmManager;
 use Alashqar\Lazarus\Llm\TokenBudget;
+use Alashqar\Lazarus\Notifications\Notifier;
 use Alashqar\Lazarus\Publishing\GitHubPublisher;
 use Alashqar\Lazarus\Publishing\PatchFilePublisher;
 use Alashqar\Lazarus\Publishing\Publisher;
@@ -34,6 +40,7 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Client\Factory as Http;
 use Illuminate\Http\Request;
@@ -83,6 +90,14 @@ final class LazarusServiceProvider extends ServiceProvider
             $this->settings()->int('llm.max_invalid_responses', 2),
         ));
 
+        $this->app->singleton(Notifier::class, fn (Container $app): Notifier => new Notifier(
+            $this->settings(),
+            $app->make(Http::class),
+            $app->make(Mailer::class),
+            is_string($name = $app->make('config')->get('app.name')) ? $name : 'Laravel',
+            $this->app->environment(),
+        ));
+
         $this->registerSandbox();
         $this->registerHealing();
 
@@ -103,7 +118,7 @@ final class LazarusServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->publishes([__DIR__.'/../config/lazarus.php' => $this->app->configPath('lazarus.php')], 'lazarus-config');
 
-            $this->commands([ListCommand::class, HealCommand::class, DoctorCommand::class, IgnoreCommand::class]);
+            $this->commands([ListCommand::class, HealCommand::class, DoctorCommand::class, IgnoreCommand::class, ScanCommand::class, NotifyTestCommand::class]);
         }
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -119,6 +134,11 @@ final class LazarusServiceProvider extends ServiceProvider
                 });
             }
         });
+
+        $events = $this->app->make(Dispatcher::class);
+        $events->listen(IncidentCaptured::class, fn (IncidentCaptured $event) => $this->app->make(Notifier::class)->captured($event));
+        $events->listen(FixPublished::class, fn (FixPublished $event) => $this->app->make(Notifier::class)->fixed($event));
+        $events->listen(HealingFailed::class, fn (HealingFailed $event) => $this->app->make(Notifier::class)->failed($event));
 
         if ($this->settings()->bool('context.record_queries', true)) {
             $this->app->make(Dispatcher::class)->listen(

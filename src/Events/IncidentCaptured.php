@@ -14,5 +14,6 @@ final readonly class IncidentCaptured
     public function __construct(
         public Incident $incident,
         public bool $isNew,
+        public bool $fromLog = false,
     ) {}
 }

@@ -12,6 +12,7 @@ use Alashqar\Lazarus\Models\Incident;
 use Alashqar\Lazarus\Redaction\Redactor;
 use Alashqar\Lazarus\Support\Settings;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Bus\Dispatcher as Bus;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
@@ -72,13 +73,21 @@ final class ExceptionCapturer
             return false;
         }
 
+        return $this->capturesClass($exception::class);
+    }
+
+    /**
+     * Whether an exception class is worth an incident: not Lazarus itself and not ignored.
+     */
+    public function capturesClass(string $class): bool
+    {
         // Never try to heal Lazarus itself; that way lies recursion.
-        if (str_starts_with($exception::class, 'Alashqar\\Lazarus\\')) {
+        if (str_starts_with($class, 'Alashqar\\Lazarus\\')) {
             return false;
         }
 
         foreach ($this->settings->strings('ignore') as $ignored) {
-            if ($exception instanceof $ignored) {
+            if (strcasecmp($class, ltrim($ignored, '\\')) === 0 || is_a($class, $ignored, true)) {
                 return false;
             }
         }
@@ -86,11 +95,15 @@ final class ExceptionCapturer
         return true;
     }
 
-    public function record(ExceptionSnapshot $exception, ?Request $request = null): Incident
+    /**
+     * Store an occurrence. `$at` is when it happened (a log line's time); `$fromLog` marks a
+     * replayed occurrence, which never starts a heal on its own.
+     */
+    public function record(ExceptionSnapshot $exception, ?Request $request = null, ?CarbonInterface $at = null, bool $fromLog = false): Incident
     {
         $fingerprint = $this->fingerprinter->fingerprint($exception);
         [$file, $line] = $this->fingerprinter->origin($exception);
-        $now = CarbonImmutable::now();
+        $now = $at !== null ? CarbonImmutable::instance($at) : CarbonImmutable::now();
 
         $incident = Incident::query()->createOrFirst(['fingerprint' => $fingerprint], [
             'exception_class' => $exception->class,
@@ -106,7 +119,14 @@ final class ExceptionCapturer
 
         if (! $isNew) {
             $incident->occurrences++;
-            $incident->last_seen_at = $now;
+
+            if ($now->greaterThan($incident->last_seen_at)) {
+                $incident->last_seen_at = $now;
+            }
+
+            if ($now->lessThan($incident->first_seen_at)) {
+                $incident->first_seen_at = $now;
+            }
 
             if ($incident->status === IncidentStatus::Captured) {
                 $incident->context = $this->collector->collect($exception, $request)->toArray();
@@ -115,9 +135,11 @@ final class ExceptionCapturer
             $incident->save();
         }
 
-        $this->events->dispatch(new IncidentCaptured($incident, $isNew));
+        $this->events->dispatch(new IncidentCaptured($incident, $isNew, $fromLog));
 
-        $this->maybeHeal($incident);
+        if (! $fromLog) {
+            $this->maybeHeal($incident);
+        }
 
         return $incident;
     }

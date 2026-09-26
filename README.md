@@ -110,9 +110,23 @@ php artisan lazarus:doctor
 Every line should say `OK`. A `WARN` on `Auto-heal` is normal. If something fails, see
 [Common problems](#common-problems).
 
-### 4. Break something on purpose
+### 4. Find errors
 
-Add a route with a bug to `routes/web.php`:
+**Your app already has errors in its logs?** Turn them into incidents in one command, without
+opening a single page:
+
+```bash
+php artisan lazarus:scan              # reads storage/logs/*.log
+php artisan lazarus:scan --since=7d   # only the last 7 days
+php artisan lazarus:scan --dry-run    # preview, store nothing
+```
+
+It groups repeats of the same bug, skips errors raised entirely inside vendor code (a database
+that was down, a wrong artisan option) because no patch in your app could fix them, and never
+counts the same log line twice. A log copied from your production server works too: its paths
+are mapped onto your project.
+
+**No errors yet?** Make one on purpose. Add a route with a bug to `routes/web.php`:
 
 ```php
 Route::get('/average', function () {
@@ -148,6 +162,41 @@ git am storage/lazarus/<file>.patch
 
 Your code is never changed until you apply the patch yourself. To get a pull request on GitHub
 instead of a file, see [Configuration](#configuration).
+
+### 6. Get notified (free, optional)
+
+Hear about new errors, ready fixes and failed heals by email, Telegram, Slack or Discord. Add
+any of these to `.env`:
+
+```dotenv
+LAZARUS_NOTIFY_MAIL=you@example.com                 # uses your app's mailer
+LAZARUS_NOTIFY_TELEGRAM_TOKEN=123456:ABC...         # from @BotFather
+LAZARUS_NOTIFY_TELEGRAM_CHAT=987654321              # your chat id
+LAZARUS_NOTIFY_WEBHOOK=https://hooks.slack.com/...  # Slack or Discord incoming webhook
+```
+
+Then check it works:
+
+```bash
+php artisan lazarus:notify-test
+```
+
+A message looks like this:
+
+```text
+[My Shop] Fix ready for review
+
+ErrorException: Attempt to read property "name" on null
+Where: routes/web.php:305
+Environment: production · incident #2 · seen 14 time(s)
+Fix: Fall back to an empty brand name when a product has no brand
+Confidence: 94%, test red then green, full suite passes
+Review: https://github.com/acme/shop/pull/42
+```
+
+**Telegram in two minutes:** open [@BotFather](https://t.me/BotFather), send `/newbot` and copy
+the token. Send any message to your new bot, then open
+`https://api.telegram.org/bot<token>/getUpdates` and copy the number after `"chat":{"id":`.
 
 ### Common problems
 
@@ -281,6 +330,8 @@ LAZARUS_DAILY_COST=5.00
 | `lazarus:heal {incident} [--queue]` | Heal one incident with live, step-by-step output |
 | `lazarus:doctor` | Checks git, worktree creation, the test runner, the database, the API key, the GitHub token and the remaining budget |
 | `lazarus:ignore {incident}` | Never heal this incident; occurrences are still counted |
+| `lazarus:scan [paths] [--since=] [--dry-run]` | Turn errors already in your log files into incidents |
+| `lazarus:notify-test` | Send a test message to every configured notification channel |
 
 `{incident}` is the numeric id or any unique prefix of the fingerprint.
 
@@ -367,11 +418,12 @@ invalid answer is sent back with the exact validation error. Add your own driver
 
 | Event | When |
 | --- | --- |
-| `IncidentCaptured` | An exception was recorded (`isNew` tells a first occurrence from a repeat) |
+| `IncidentCaptured` | An exception was recorded (`isNew` tells a first occurrence from a repeat, `fromLog` a scanned one) |
 | `ReproductionConfirmed` | A test fails with the original exception (red) |
 | `ReproductionFailed` | No attempt produced a valid reproduction |
 | `FixVerified` | The test is green and the full suite passes |
 | `PullRequestOpened` | The pull request exists; carries the URL and the full report |
+| `FixPublished` | A verified fix is ready as a pull request or a patch file |
 | `HealingFailed` | A heal stopped; carries the stage and the reason |
 | `HealingStepStarted` / `HealingStepCompleted` | Progress for each pipeline step (drives `lazarus:heal`) |
 

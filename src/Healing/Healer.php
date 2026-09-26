@@ -6,6 +6,7 @@ namespace Alashqar\Lazarus\Healing;
 
 use Alashqar\Lazarus\Enums\HealingStage;
 use Alashqar\Lazarus\Enums\IncidentStatus;
+use Alashqar\Lazarus\Events\FixPublished;
 use Alashqar\Lazarus\Events\FixVerified;
 use Alashqar\Lazarus\Events\HealingFailed;
 use Alashqar\Lazarus\Events\HealingStepCompleted;
@@ -153,6 +154,8 @@ final readonly class Healer
         if ($result->url !== null) {
             $this->events->dispatch(new PullRequestOpened($state->incident, $result->url, $report));
         }
+
+        $this->events->dispatch(new FixPublished($state->incident, $report, $result));
 
         return $report;
     }
