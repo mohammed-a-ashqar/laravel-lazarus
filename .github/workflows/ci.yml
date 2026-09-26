@@ -78,3 +78,66 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/pest
+
+  databases:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # MariaDB 10.6 keeps explicit_defaults_for_timestamp off, like XAMPP.
+          - name: MariaDB 10.6
+            image: mariadb:10.6
+            connection: mysql
+            port: 3306
+            env: '{"MARIADB_ROOT_PASSWORD":"password","MARIADB_DATABASE":"lazarus"}'
+          - name: MySQL 8.4
+            image: mysql:8.4
+            connection: mysql
+            port: 3306
+            env: '{"MYSQL_ROOT_PASSWORD":"password","MYSQL_DATABASE":"lazarus"}'
+          - name: PostgreSQL 16
+            image: postgres:16
+            connection: pgsql
+            port: 5432
+            env: '{"POSTGRES_USER":"root","POSTGRES_PASSWORD":"password","POSTGRES_DB":"lazarus"}'
+
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env: ${{ fromJSON(matrix.env) }}
+        ports:
+          - 33060:${{ matrix.port }}
+        options: >-
+          --health-cmd="${{ matrix.connection == 'pgsql' && 'pg_isready' || 'mysqladmin ping -ppassword' }}"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    env:
+      LAZARUS_TEST_DB: ${{ matrix.connection }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 33060
+      DB_DATABASE: lazarus
+      DB_USERNAME: root
+      DB_PASSWORD: password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          coverage: none
+
+      - name: Configure git
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.com"
+          git config --global init.defaultBranch main
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Run tests
+        run: vendor/bin/pest

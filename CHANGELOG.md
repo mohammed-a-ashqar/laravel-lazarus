@@ -4,6 +4,13 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-09-26
+
+### Fixed
+
+- The incidents migration failed on MySQL and MariaDB (`1067 Invalid default value for
+  last_seen_at`) because of two non-null `timestamp` columns. They are now `datetime` columns.
+
 ## [0.1.0] - 2026-09-26
 
 ### Added
@@ -24,4 +31,5 @@ All notable changes to this package are documented here. The format follows
   use Pest functions. Parse errors and missing classes get specific feedback, which helps small
   local models.
 
+[0.1.1]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.1
 [0.1.0]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.0

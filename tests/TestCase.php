@@ -17,7 +17,8 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('cache.default', 'array');
-        $app['config']->set('database.default', 'testing');
+        // SQLite in memory by default; CI also runs the suite on MySQL with LAZARUS_TEST_DB=mysql.
+        $app['config']->set('database.default', env('LAZARUS_TEST_DB', 'testing'));
         $app['config']->set('queue.default', 'sync');
         $app['config']->set('lazarus.environments', ['testing']);
         $app['config']->set('lazarus.llm.driver', 'fake');

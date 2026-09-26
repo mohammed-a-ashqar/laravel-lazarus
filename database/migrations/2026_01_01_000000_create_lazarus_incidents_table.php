@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('file')->nullable();
             $table->unsignedInteger('line')->nullable();
             $table->unsignedInteger('occurrences')->default(1);
-            $table->timestamp('first_seen_at');
-            $table->timestamp('last_seen_at');
+            $table->dateTime('first_seen_at');
+            $table->dateTime('last_seen_at');
             $table->string('status', 20)->default('captured')->index();
             $table->text('failure_reason')->nullable();
             $table->string('pr_url')->nullable();
