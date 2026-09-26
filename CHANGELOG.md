@@ -16,3 +16,10 @@ All notable changes to this package are documented here. The format follows
 - Anthropic, OpenAI, Ollama and fake LLM drivers with strict JSON validation and a daily budget.
 - GitHub pull request and patch file publishers.
 - `lazarus:list`, `lazarus:heal`, `lazarus:doctor` and `lazarus:ignore` commands.
+- `SECURITY.md`, `CONTRIBUTING.md` and issue templates.
+
+- Reproduction tests must assert the correct behaviour; a test that only triggers the bug is
+  rejected.
+- Markdown fences around generated test files are stripped, and PHPUnit projects are told not to
+  use Pest functions. Parse errors and missing classes get specific feedback, which helps small
+  local models.
