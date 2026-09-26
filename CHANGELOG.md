@@ -4,6 +4,14 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-09-26
+
+### Fixed
+
+- A rate limit (HTTP 429) or an overloaded API (503, 529) no longer fails the heal. Lazarus waits
+  as long as the API asks (`Retry-After`, or Groq's "try again in 14.43s") and retries up to four
+  times. Errors that will not go away, such as a wrong API key, still fail at once.
+
 ## [0.1.1] - 2026-09-26
 
 ### Fixed
@@ -34,5 +42,6 @@ All notable changes to this package are documented here. The format follows
   use Pest functions. Parse errors and missing classes get specific feedback, which helps small
   local models.
 
+[0.1.2]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.2
 [0.1.1]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.1
 [0.1.0]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.0

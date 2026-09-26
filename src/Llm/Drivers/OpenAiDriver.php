@@ -31,7 +31,7 @@ final readonly class OpenAiDriver implements LlmDriver
         }
 
         try {
-            $response = $this->http
+            $response = RateLimitRetry::apply($this->http)
                 ->baseUrl(rtrim($this->config->string('base_url', 'https://api.openai.com'), '/'))
                 ->timeout($this->config->int('timeout', 180))
                 ->acceptJson()

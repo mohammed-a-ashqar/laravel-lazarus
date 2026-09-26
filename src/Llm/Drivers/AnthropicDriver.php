@@ -26,7 +26,7 @@ final readonly class AnthropicDriver implements LlmDriver
     public function complete(LlmRequest $request): LlmResponse
     {
         try {
-            $response = $this->http
+            $response = RateLimitRetry::apply($this->http)
                 ->baseUrl(rtrim($this->config->string('base_url', 'https://api.anthropic.com'), '/'))
                 ->timeout($this->config->int('timeout', 180))
                 ->acceptJson()

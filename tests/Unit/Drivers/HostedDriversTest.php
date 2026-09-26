@@ -8,6 +8,7 @@ use Alashqar\Lazarus\Llm\LlmException;
 use Alashqar\Lazarus\Llm\LlmManager;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 
 function conversationRequest(): LlmRequest
 {
@@ -17,6 +18,7 @@ function conversationRequest(): LlmRequest
 beforeEach(function (): void {
     config()->set('lazarus.llm.drivers.anthropic.api_key', 'test-anthropic-key');
     config()->set('lazarus.llm.drivers.openai.api_key', 'test-openai-key');
+    Sleep::fake();
 });
 
 it('calls the Anthropic Messages API and prices the usage', function (): void {
@@ -81,4 +83,34 @@ it('knows whether a hosted driver has its API key', function (): void {
 
     expect(app(LlmManager::class)->driver('anthropic')->isConfigured())->toBeTrue()
         ->and(app(LlmManager::class)->driver('openai')->isConfigured())->toBeFalse();
+});
+
+it('waits out a rate limit for as long as the API asks, then succeeds', function (): void {
+    Http::fake(['*' => Http::sequence()
+        ->push(['error' => ['message' => 'Rate limit reached for model on tokens per minute (TPM). Please try again in 14.43s.']], 429)
+        ->push(['model' => 'gpt-5', 'choices' => [['message' => ['role' => 'assistant', 'content' => '{"ok":true}']]], 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 1]]),
+    ]);
+
+    $response = app(LlmManager::class)->driver('openai')->complete(conversationRequest());
+
+    expect($response->content)->toBe('{"ok":true}');
+    Http::assertSentCount(2);
+    Sleep::assertSlept(fn ($duration): bool => (int) $duration->totalMilliseconds === 14_430);
+});
+
+it('honours Retry-After and gives up after four attempts', function (): void {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Too many requests']], 429, ['Retry-After' => '3'])]);
+
+    expect(fn () => app(LlmManager::class)->driver('openai')->complete(conversationRequest()))
+        ->toThrow(LlmException::class, 'HTTP 429: Too many requests');
+    Http::assertSentCount(4);
+    Sleep::assertSleptTimes(3);
+});
+
+it('does not retry errors that will not go away', function (): void {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Invalid API key']], 401)]);
+
+    expect(fn () => app(LlmManager::class)->driver('openai')->complete(conversationRequest()))
+        ->toThrow(LlmException::class, 'HTTP 401');
+    Http::assertSentCount(1);
 });
