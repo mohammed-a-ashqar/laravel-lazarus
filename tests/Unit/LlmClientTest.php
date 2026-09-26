@@ -113,3 +113,12 @@ it('checks the budget before every call and records what was spent', function ()
     expect(fn () => llmClient($driver, $budget)->ask(new Conversation('s'), Diagnosis::class))->toThrow(BudgetExceeded::class);
     $driver->assertSent(2);
 });
+
+it('strips Markdown fences that small models leave around the test file', function (): void {
+    $test = ReproductionTest::fromLlm([
+        'path' => 'tests/Feature/FenceTest.php',
+        'content' => "```php\n<?php\n\nit('works', fn () => expect(true)->toBeTrue());\n```",
+    ]);
+
+    expect($test->content)->toBe("<?php\n\nit('works', fn () => expect(true)->toBeTrue());\n");
+});

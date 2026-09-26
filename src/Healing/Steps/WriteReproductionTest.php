@@ -111,6 +111,18 @@ final readonly class WriteReproductionTest implements Step
             return null;
         }
 
+        if ($run->mentions('syntax error')) {
+            return 'the test file has a PHP syntax error, so it never ran. Return plain PHP without Markdown fences.';
+        }
+
+        if ($run->mentions('Call to undefined function test()') || $run->mentions('Call to undefined function it()')) {
+            return 'this project does not use Pest. Write a PHPUnit class that extends Tests\TestCase.';
+        }
+
+        if (preg_match('/Class "([^"]+)" not found/', $run->output, $missing) === 1) {
+            return "the test never ran: class {$missing[1]} does not exist. Import every class with a use statement or its fully qualified name.";
+        }
+
         return sprintf('the test failed, but not with %s ("%s"). It must fail because of the reported bug.', $incident->shortClass(), $message);
     }
 }

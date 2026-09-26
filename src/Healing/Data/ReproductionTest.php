@@ -30,7 +30,7 @@ final readonly class ReproductionTest implements StructuredResponse
     public static function fromLlm(array $data): static
     {
         $path = ltrim(str_replace('\\', '/', Payload::string($data, 'path')), '/');
-        $content = Payload::string($data, 'content');
+        $content = self::withoutFences(Payload::string($data, 'content'));
 
         if (! str_starts_with($path, 'tests/') || ! str_ends_with($path, 'Test.php')) {
             throw new InvalidLlmResponse('"path" must be a new file under tests/ whose name ends in Test.php.');
@@ -41,5 +41,15 @@ final readonly class ReproductionTest implements StructuredResponse
         }
 
         return new self($path, $content, is_string($data['reasoning'] ?? null) ? $data['reasoning'] : '');
+    }
+
+    /**
+     * Small models often wrap the file in Markdown fences even inside JSON; a stray ``` is a parse error.
+     */
+    private static function withoutFences(string $content): string
+    {
+        $content = preg_replace('/^\s*```[a-z]*[ \t]*\R/i', '', $content) ?? $content;
+
+        return (preg_replace('/\R\s*```\s*$/', '', $content) ?? $content)."\n";
     }
 }

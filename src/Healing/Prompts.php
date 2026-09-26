@@ -57,6 +57,9 @@ final class Prompts
             - Keep it focused: one scenario, no network, no sleeps, no reliance on production data.
             - Use a new path under tests/ ending in Test.php. Existing test files cannot be overwritten.
             TXT,
+            $framework === TestFramework::PhpUnit
+                ? '- PHPUnit only: declare a class that extends Tests\TestCase with a public test method. Pest functions such as test() and it() are not installed.'
+                : null,
             'Respond with JSON of this shape:',
             ReproductionTest::schema(),
         ]));
