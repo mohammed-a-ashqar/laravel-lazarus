@@ -40,6 +40,11 @@ final readonly class ReproductionTest implements StructuredResponse
             throw new InvalidLlmResponse('"content" must be a complete PHP file starting with <?php.');
         }
 
+        // Without an assertion the green run only proves "no exception", not the correct behaviour.
+        if (preg_match('/\bassert\w*\s*\(|\bexpect\s*\(/i', $content) !== 1) {
+            throw new InvalidLlmResponse('"content" must assert the correct behaviour (an assert*() or expect() call), not only trigger the bug.');
+        }
+
         return new self($path, $content, is_string($data['reasoning'] ?? null) ? $data['reasoning'] : '');
     }
 

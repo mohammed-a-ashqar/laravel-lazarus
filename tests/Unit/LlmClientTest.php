@@ -122,3 +122,10 @@ it('strips Markdown fences that small models leave around the test file', functi
 
     expect($test->content)->toBe("<?php\n\nit('works', fn () => expect(true)->toBeTrue());\n");
 });
+
+it('rejects a reproduction test that asserts nothing', function (): void {
+    expect(fn () => ReproductionTest::fromLlm([
+        'path' => 'tests/Feature/NoAssertionTest.php',
+        'content' => "<?php\n\nit('crashes', function () {\n    \$this->withoutExceptionHandling()->get('/boom');\n});\n",
+    ]))->toThrow(InvalidLlmResponse::class, 'must assert the correct behaviour');
+});
