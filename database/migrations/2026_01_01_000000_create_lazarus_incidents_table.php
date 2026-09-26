@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('report_path')->nullable();
             $table->unsignedInteger('tokens_used')->default(0);
             $table->decimal('cost', 10, 4)->default(0);
-            $table->json('context')->nullable();
+            $table->longText('context')->nullable(); // text, not json: MySQL reorders JSON object keys
             $table->timestamps();
         });
     }

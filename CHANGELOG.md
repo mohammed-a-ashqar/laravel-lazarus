@@ -10,6 +10,9 @@ All notable changes to this package are documented here. The format follows
 
 - The incidents migration failed on MySQL and MariaDB (`1067 Invalid default value for
   last_seen_at`) because of two non-null `timestamp` columns. They are now `datetime` columns.
+- MySQL 8 reordered the keys of the stored incident context because the column was `json`. It
+  is now a text column, so the context is stored exactly as captured on every database.
+- CI now runs the full suite on MariaDB 10.6, MySQL 8.4 and PostgreSQL 16 as well as SQLite.
 
 ## [0.1.0] - 2026-09-26
 
