@@ -4,7 +4,7 @@
 composer.lock
 .phpunit.result.cache
 phpstan.neon
-phpunit.xml
+/phpunit.xml
 .idea/
 .vscode/
 .DS_Store
