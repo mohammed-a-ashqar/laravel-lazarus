@@ -10,6 +10,8 @@ that reproduces the bug, proves it fails, finds a minimal patch, proves the test
 the rest of your suite still does, then opens a pull request with the whole case. A human merges
 it or doesn't. If any step can't be proven, nothing is published and you are told why.
 
+Example output (illustrative):
+
 ```text
 $ php artisan lazarus:heal 3
 
@@ -90,7 +92,7 @@ flowchart LR
 > **Demo GIF coming soon.** Break a fresh Laravel app, run `php artisan lazarus:heal 1`, watch the
 > red run, the patch and the green suite scroll by, then open the pull request that just arrived.
 
-The video shows a fresh Laravel app with an `InvoiceCalculator` that divides by zero when an
+The demo will show a fresh Laravel app with an `InvoiceCalculator` that divides by zero when an
 invoice only contains free samples. Visiting the page returns a 500; `lazarus:list` shows the
 incident; `lazarus:heal 1` reproduces it, patches it and verifies it live; the pull request lands
 on GitHub with the diagnosis, the test, the diff and both test runs. Every step to reproduce it is
@@ -105,8 +107,17 @@ in [`examples/demo-app.md`](examples/demo-app.md).
 
 ## Installation
 
+The package is not on Packagist yet. Until it is, add the repository to your app's
+`composer.json` first:
+
+```json
+"repositories": [
+    { "type": "vcs", "url": "https://github.com/mohammedname2002/laravel-lazarus" }
+]
+```
+
 ```bash
-composer require mohammedname2002/laravel-lazarus
+composer require mohammedname2002/laravel-lazarus:dev-main
 php artisan vendor:publish --tag=lazarus-config
 php artisan migrate
 php artisan lazarus:doctor
