@@ -78,7 +78,7 @@ it('scans logs into incidents, counts repeats and never counts a line twice', fu
     );
 
     $this->artisan('lazarus:scan', ['paths' => [$log]])
-        ->expectsOutputToContain('3 error(s) in 1 log file(s): 1 incident(s), 1 new')
+        ->expectsOutputToContain('3 error(s) in 1 log file(s): 1 incident(s) updated, 1 new')
         ->expectsOutputToContain('Skipped (raised inside vendor code, or ignored)')
         ->assertSuccessful();
 
@@ -163,4 +163,18 @@ it('sends a test notification and reports each channel', function (): void {
 
     config()->set('lazarus.notifications.telegram', ['token' => null, 'chat_id' => null]);
     $this->artisan('lazarus:notify-test')->expectsOutputToContain('No notification channel')->assertFailed();
+});
+
+it('skips errors whose only application frame is a front controller or an off-limits file', function (): void {
+    $log = writeLog(
+        logEntry($this->root, '2026-09-26 10:00:00', 'RuntimeException', 'The "--columns" option does not exist.', 'artisan', 13)
+        .logEntry($this->root, '2026-09-26 10:01:00', 'Illuminate\Database\QueryException', 'Table already exists', 'database/migrations/2026_01_01_000000_create_posts_table.php', 12)
+    );
+
+    $this->artisan('lazarus:scan', ['paths' => [$log]])
+        ->expectsOutputToContain('0 incident(s) updated, 0 new')
+        ->expectsOutputToContain('Skipped (in files Lazarus may not change, such as migrations)')
+        ->assertSuccessful();
+
+    expect(Incident::query()->count())->toBe(0);
 });

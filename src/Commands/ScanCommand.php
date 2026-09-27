@@ -8,6 +8,7 @@ use Alashqar\Lazarus\Capture\ExceptionCapturer;
 use Alashqar\Lazarus\Capture\Fingerprinter;
 use Alashqar\Lazarus\Capture\LogParser;
 use Alashqar\Lazarus\Models\Incident;
+use Alashqar\Lazarus\Sandbox\PathGuard;
 use Alashqar\Lazarus\Support\Project;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
@@ -22,7 +23,7 @@ final class ScanCommand extends Command
 
     protected $description = 'Turn errors already in your Laravel logs into incidents, ready to heal';
 
-    public function handle(ExceptionCapturer $capturer, Fingerprinter $fingerprinter, Project $project): int
+    public function handle(ExceptionCapturer $capturer, Fingerprinter $fingerprinter, Project $project, PathGuard $guard): int
     {
         $since = $this->since();
 
@@ -45,7 +46,7 @@ final class ScanCommand extends Command
 
         /** @var array<string, array{incident: Incident|null, class: string, location: string, count: int, new: bool}> $found */
         $found = [];
-        $read = $skipped = $alreadyCounted = 0;
+        $read = $skipped = $unfixable = $alreadyCounted = 0;
 
         foreach ($files as $file) {
             foreach ($parser->parse($file, $since) as ['at' => $at, 'snapshot' => $snapshot]) {
@@ -56,6 +57,13 @@ final class ScanCommand extends Command
                 // that is down) have no line in your app that a patch could change.
                 if ($origin === null || ! $capturer->capturesClass($snapshot->class)) {
                     $skipped++;
+
+                    continue;
+                }
+
+                // Migrations, config and the like are off limits to patches, so a heal could not help.
+                if (! $guard->allows($origin)) {
+                    $unfixable++;
 
                     continue;
                 }
@@ -80,7 +88,7 @@ final class ScanCommand extends Command
             }
         }
 
-        $this->report($files, $found, $read, $skipped, $alreadyCounted, $dryRun);
+        $this->report($files, $found, $read, $skipped, $unfixable, $alreadyCounted, $dryRun);
 
         return self::SUCCESS;
     }
@@ -89,12 +97,14 @@ final class ScanCommand extends Command
      * @param  list<string>  $files
      * @param  array<string, array{incident: Incident|null, class: string, location: string, count: int, new: bool}>  $found
      */
-    private function report(array $files, array $found, int $read, int $skipped, int $alreadyCounted, bool $dryRun): void
+    private function report(array $files, array $found, int $read, int $skipped, int $unfixable, int $alreadyCounted, bool $dryRun): void
     {
-        $new = count(array_filter($found, static fn (array $item): bool => $item['new'] && $item['count'] > 0));
+        // Incidents whose every line was already counted are covered by the "Already counted" line.
+        $found = array_filter($found, static fn (array $item): bool => $item['count'] > 0);
+        $new = count(array_filter($found, static fn (array $item): bool => $item['new']));
 
         $this->components->info(sprintf(
-            '%s %d error(s) in %d log file(s): %d incident(s), %d new.%s',
+            '%s %d error(s) in %d log file(s): %d incident(s) updated, %d new.%s',
             $dryRun ? 'Dry run: found' : 'Scanned',
             $read,
             count($files),
@@ -105,6 +115,10 @@ final class ScanCommand extends Command
 
         if ($skipped > 0) {
             $this->components->twoColumnDetail('Skipped (raised inside vendor code, or ignored)', (string) $skipped);
+        }
+
+        if ($unfixable > 0) {
+            $this->components->twoColumnDetail('Skipped (in files Lazarus may not change, such as migrations)', (string) $unfixable);
         }
 
         if ($alreadyCounted > 0) {

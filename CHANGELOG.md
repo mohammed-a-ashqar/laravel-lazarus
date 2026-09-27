@@ -4,6 +4,15 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-09-27
+
+### Fixed
+
+- Errors whose only application frame is `artisan`, `public/index.php` or `server.php` are no
+  longer blamed on those front controllers; they count as vendor errors.
+- `lazarus:scan` skips errors in files a patch may not change (migrations, config) and no longer
+  lists incidents whose log lines were all counted before.
+
 ## [0.2.0] - 2026-09-26
 
 ### Added
@@ -56,6 +65,7 @@ All notable changes to this package are documented here. The format follows
   use Pest functions. Parse errors and missing classes get specific feedback, which helps small
   local models.
 
+[0.2.1]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.2.1
 [0.2.0]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.2.0
 [0.1.2]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.2
 [0.1.1]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.1

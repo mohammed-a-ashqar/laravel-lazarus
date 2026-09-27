@@ -40,7 +40,8 @@ final readonly class Fingerprinter
 
             $relative = $this->project->relative($frame['file']);
 
-            if ($relative !== null) {
+            // Front controllers only hand the request to the framework; they are never the bug.
+            if ($relative !== null && ! in_array($relative, ['artisan', 'public/index.php', 'server.php'], true)) {
                 return [$relative, $frame['line']];
             }
         }
