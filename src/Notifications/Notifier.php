@@ -9,6 +9,7 @@ use Alashqar\Lazarus\Events\HealingFailed;
 use Alashqar\Lazarus\Events\IncidentCaptured;
 use Alashqar\Lazarus\Models\Incident;
 use Alashqar\Lazarus\Support\Settings;
+use Closure;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Mail\Message;
@@ -26,6 +27,8 @@ final class Notifier
         private readonly Mailer $mailer,
         private readonly string $appName,
         private readonly string $environment,
+        /** @var (Closure(Closure(): void): void)|null Runs a send later, e.g. after the HTTP response. */
+        private readonly ?Closure $defer = null,
     ) {}
 
     public function captured(IncidentCaptured $event): void
@@ -34,9 +37,16 @@ final class Notifier
             return;
         }
 
-        $this->send('New error', $this->lines($event->incident, [
+        $lines = $this->lines($event->incident, [
             'Lazarus will heal it when you run: php artisan lazarus:heal '.$event->incident->id,
-        ]));
+        ]);
+        $send = function () use ($lines): void {
+            $this->send('New error', $lines);
+        };
+
+        // A live error is captured while the failing request is still open: sending later means a
+        // slow mail server or webhook never delays the visitor.
+        $this->defer !== null ? ($this->defer)($send) : $send();
     }
 
     public function fixed(FixPublished $event): void

@@ -4,6 +4,13 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-09-27
+
+### Fixed
+
+- The new-error notification is sent after the HTTP response instead of during it, so a slow mail
+  server, Telegram or webhook never delays the visitor who hit the error.
+
 ## [0.2.1] - 2026-09-27
 
 ### Fixed
@@ -65,6 +72,7 @@ All notable changes to this package are documented here. The format follows
   use Pest functions. Parse errors and missing classes get specific feedback, which helps small
   local models.
 
+[0.2.2]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.2.2
 [0.2.1]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.2.1
 [0.2.0]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.2.0
 [0.1.2]: https://github.com/mohammed-a-ashqar/laravel-lazarus/releases/tag/v0.1.2

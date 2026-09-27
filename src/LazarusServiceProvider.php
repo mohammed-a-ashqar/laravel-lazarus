@@ -35,6 +35,7 @@ use Alashqar\Lazarus\Sandbox\PathGuard;
 use Alashqar\Lazarus\Sandbox\ProcessRunner;
 use Alashqar\Lazarus\Support\Project;
 use Alashqar\Lazarus\Support\Settings;
+use Closure;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
@@ -96,6 +97,9 @@ final class LazarusServiceProvider extends ServiceProvider
             $app->make(Mailer::class),
             is_string($name = $app->make('config')->get('app.name')) ? $name : 'Laravel',
             $this->app->environment(),
+            $this->app->runningInConsole() ? null : function (Closure $send) use ($app): void {
+                $app->make('app')->terminating($send);
+            },
         ));
 
         $this->registerSandbox();

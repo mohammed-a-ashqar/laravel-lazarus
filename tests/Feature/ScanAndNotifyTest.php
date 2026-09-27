@@ -178,3 +178,29 @@ it('skips errors whose only application frame is a front controller or an off-li
 
     expect(Incident::query()->count())->toBe(0);
 });
+
+it('sends the new-error notification only after the response during a web request', function (): void {
+    Http::fake();
+    config()->set('lazarus.notifications.webhook', 'https://hooks.slack.test/abc');
+
+    $later = [];
+    $this->app->instance(Alashqar\Lazarus\Notifications\Notifier::class, new Alashqar\Lazarus\Notifications\Notifier(
+        app(Alashqar\Lazarus\Support\Settings::class),
+        app(Illuminate\Http\Client\Factory::class),
+        app('mailer'),
+        'Shop',
+        'production',
+        function (Closure $send) use (&$later): void {
+            $later[] = $send;
+        },
+    ));
+
+    app(ExceptionCapturer::class)->record(ExceptionSnapshot::fromThrowable(new DivisionByZeroError('Division by zero')));
+
+    Http::assertSentCount(0);
+    expect($later)->toHaveCount(1);
+
+    $later[0]();
+
+    Http::assertSentCount(1);
+});
